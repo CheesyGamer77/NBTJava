@@ -6,7 +6,7 @@ public class TagByte {
     private String name;
 
     public TagByte(String tagName, byte tagValue) {
-        value = tagValue;
         name = tagName;
+        value = tagValue;
     }
 }
