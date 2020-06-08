@@ -3,7 +3,7 @@ package NBTJava;
 import java.util.Hashtable;
 
 public class TagCompound {
-    private final int id = 9;
+    private final int id = 10;
     private Hashtable<String, Object> value;
     private String name;
 
