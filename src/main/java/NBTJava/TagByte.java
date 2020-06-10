@@ -6,8 +6,17 @@ import java.nio.charset.StandardCharsets;
 
 public final class TagByte {
     private final int ID = 1;
-    private final byte value;
     private final String name;
+    private final byte value;
+
+    public TagByte(String tagName, byte tagValue) {
+        /*
+         * Creates a new TagByte object from a name and value (for creating new tags)
+         */
+
+        name = tagName;
+        value = tagValue;
+    }
 
     public TagByte(GZIPInputStream inputStream, int byteOffset) throws IOException {
         /*
@@ -35,6 +44,35 @@ public final class TagByte {
     }
 
     public String toString() {
-        return String.format("%bb", value);
+        /*
+         * Returns the string representation of this byte tag
+         */
+
+        return String.format("%s:%sb", name, value);
+    }
+
+    public byte[] getBytes() {
+        /*
+         * Returns the raw byte array representation of this NBT tag
+         */
+
+        int nameLength = name.toCharArray().length; // length of the tag name for the second and third bytes
+        byte[] bytes = new byte[4 + nameLength];
+
+        bytes[0] = ID;
+
+        // next two bits are the big endian unsigned integer for the name's length
+        bytes[1] = (byte) (nameLength >> 8);
+        bytes[2] = (byte) (nameLength);
+
+        // set the name bytes (encoded in UTF-8)
+        byte[] nameBytes = name.getBytes(StandardCharsets.UTF_8);
+        for(int i = 3; i < nameBytes.length + 3; i++) {
+            bytes[i] = nameBytes[(i-3)];
+        }
+
+        bytes[bytes.length-1] = value; // last index is always the value of the byte tag
+
+        return bytes;
     }
 }
