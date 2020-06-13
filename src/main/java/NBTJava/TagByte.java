@@ -1,11 +1,9 @@
 package NBTJava;
 
-import java.io.IOException;
-import java.util.zip.GZIPInputStream;
 import java.nio.charset.StandardCharsets;
 
 public final class TagByte {
-    private final int ID = 1;
+    private static final int ID = 1;
     private final String name;
     private final byte value;
 
@@ -18,29 +16,26 @@ public final class TagByte {
         value = tagValue;
     }
 
-    public TagByte(GZIPInputStream inputStream, int byteOffset) throws IOException {
+    public TagByte(byte[] bytes) {
         /*
-         * Creates a new TagByte object based off the data from a GZIPInputStream (for compressed NBT)
+         * Creates a new TagByte object based on a byte array.
          *
-         * The byte offset should be designated to the first byte of the tag (aka the tag type which should be
-         * a TAG_Byte type anyways)
+         * The first byte must be the tag's id
          */
 
-        byte[] buffer = {};
-        int offset = byteOffset + 1; // frankly we don't care about the tag type in our case, so skip that byte
+        int nameLength = ((bytes[1] & 0xff) << 8 | (bytes[2] & 0xff));
 
-        // read the next two bytes for the length of the name so we can setup the name buffer
-        inputStream.read(buffer, offset, 2);
-        offset += 2;
+        // set the name of the tag
+        String tempName = "";
+        for(int i = 3; i < nameLength + 3; i++) {
+            // cant convert a single byte to a string, have to convert to a byte array
+            byte[] tempArray = {bytes[i]};
+            tempName = tempName.concat(new String(tempArray, StandardCharsets.UTF_8));
+        }
+        name = tempName;
 
-        // read a byte for the name
-        inputStream.read(buffer, offset, 1);
-        name = new String(buffer, StandardCharsets.UTF_8);
-        offset += 1;
-
-        // read the payload (1 byte) and set the value
-        inputStream.read(buffer, offset, 1);
-        value = buffer[0];
+        // set the value of the tag
+        value = bytes[3 + nameLength];
     }
 
     public String toString() {
@@ -59,9 +54,8 @@ public final class TagByte {
         int nameLength = name.toCharArray().length; // length of the tag name for the second and third bytes
         byte[] bytes = new byte[4 + nameLength];
 
+        // set the id and name length bytes
         bytes[0] = ID;
-
-        // next two bits are the big endian unsigned integer for the name's length
         bytes[1] = (byte) (nameLength >> 8);
         bytes[2] = (byte) (nameLength);
 
